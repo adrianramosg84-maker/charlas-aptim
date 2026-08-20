@@ -50,14 +50,14 @@
 
     <!-- Fecha -->
     <div class="form-grupo">
-      <label for="fecha">Fecha <span class="req">*</span></label>
-      <input type="date" id="fecha" required>
+      <label for="fecha">Fecha</label>
+      <input type="date" id="fecha">
     </div>
 
     <!-- Sitio/Sede -->
     <div class="form-grupo">
-      <label for="sede">Sitio / Sede <span class="req">*</span></label>
-      <input type="text" id="sede" value="PFLGN - PISCO" placeholder="Ej: PFLGN - PISCO" required>
+      <label for="sede">Sitio / Sede</label>
+      <input type="text" id="sede" value="PFLGN - PISCO" placeholder="Ej: PFLGN - PISCO">
       <div class="hint">Pre-cargado. Puedes borrarlo y escribir otro.</div>
     </div>
 
@@ -241,9 +241,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Inicializar BD
   await DB.inicializar();
 
-  // Fecha de hoy
+  // Fecha de hoy — formato YYYY-MM-DD compatible con todos los navegadores móviles
   const hoy = new Date();
-  document.getElementById('fecha').value = hoy.toISOString().split('T')[0];
+  const yyyy = hoy.getFullYear();
+  const mm   = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dd   = String(hoy.getDate()).padStart(2, '0');
+  document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
+
+  // Sede pre-cargada por si el atributo value no se aplica en móvil
+  if (!document.getElementById('sede').value) {
+    document.getElementById('sede').value = 'PFLGN - PISCO';
+  }
 
   // Cargar correos en memoria
   memoriaCorreos = await DB.config.correosMemoria();
@@ -485,9 +493,16 @@ function iniciarCharla() {
     }
   });
 
+  // Fecha — usar hoy si está vacía
+  const hoy2 = new Date();
+  const yyyy = hoy2.getFullYear();
+  const mm   = String(hoy2.getMonth() + 1).padStart(2, '0');
+  const dd   = String(hoy2.getDate()).padStart(2, '0');
+  const fechaVal = document.getElementById('fecha').value || `${yyyy}-${mm}-${dd}`;
+
   // Guardar configuración de la charla en sessionStorage
   const charlaConfig = {
-    fecha:        document.getElementById('fecha').value,
+    fecha:        fechaVal,
     sede:         document.getElementById('sede').value.trim() || 'PFLGN - PISCO',
     horas:        document.getElementById('horas').value || '',
     tiposActividad: tipos,
