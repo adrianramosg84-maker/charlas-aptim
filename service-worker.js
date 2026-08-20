@@ -5,8 +5,8 @@
  * sin internet después del primer acceso
  */
 
-const CACHE_NAME    = 'charlas-aptim-v3';
-const CACHE_OFFLINE = 'charlas-aptim-offline-v3';
+const CACHE_NAME    = 'charlas-aptim-v4';
+const CACHE_OFFLINE = 'charlas-aptim-offline-v4';
 
 // Archivos a cachear al instalar (app shell)
 const ARCHIVOS_CACHE = [
