@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Historial — APTIM PERÚ</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a3a5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Charlas APTIM">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+</head>
+<body>
+
+<!-- ═══ ENCABEZADO ═══ -->
+<header class="header">
+  <div class="header-logo">🦺</div>
+  <div class="header-texto">
+    <h1>Historial de Charlas</h1>
+    <p>APTIM PERÚ S.A.C. — Acceso EHS</p>
+  </div>
+  <nav class="header-nav">
+    <a href="index.html"     class="btn-nav">📋 Nueva Charla</a>
+    <a href="historial.html" class="btn-nav activo">📂 Historial</a>
+  </nav>
+</header>
+
+<!-- ═══ PANTALLA DE LOGIN EHS ═══ -->
+<div id="pantalla-login">
+  <div class="login-ehs">
+    <div class="card">
+      <div class="login-logo">🔐</div>
+      <h2>Acceso EHS</h2>
+      <p>Ingrese la contraseña para acceder al historial de charlas</p>
+
+      <div class="form-grupo">
+        <label for="input-pass">Contraseña</label>
+        <input type="password" id="input-pass"
+               placeholder="Contraseña EHS"
+               onkeydown="if(event.key==='Enter') verificarAcceso()">
+        <div class="error-msg" id="pass-error">Contraseña incorrecta.</div>
+      </div>
+
+      <button class="btn btn-primario btn-bloque btn-grande" onclick="verificarAcceso()" style="margin-top:8px;">
+        🔓 Ingresar
+      </button>
+
+      <p style="margin-top:16px; font-size:0.75rem; color:#9ca3af;">
+        Contraseña por defecto: <code>aptimehs2024</code><br>
+        Puede cambiarla desde Configuración
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANTALLA DE HISTORIAL (oculta hasta login) ═══ -->
+<div id="pantalla-historial" class="oculto">
+  <div class="contenedor-ancho">
+
+    <!-- Barra de acciones -->
+    <div style="display:flex; align-items:center; gap:12px; margin:16px 0 12px; flex-wrap:wrap;">
+      <div>
+        <h2 style="font-size:1.05rem; font-weight:700; color:#1a3a5c;">📂 Historial de Charlas</h2>
+        <p style="font-size:0.78rem; color:#6b7280;" id="total-charlas-texto"></p>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-gris btn-chico" onclick="mostrarCambioPass()">🔑 Cambiar contraseña</button>
+        <button class="btn btn-gris btn-chico" onclick="cerrarSesionEHS()">🚪 Salir</button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card" style="padding:14px 16px;">
+      <div class="historial-filtros">
+        <input type="text"   id="filtro-texto"  placeholder="🔍 Buscar por tema o capacitador..." oninput="aplicarFiltros()">
+        <input type="month"  id="filtro-mes"    oninput="aplicarFiltros()" title="Filtrar por mes">
+        <select id="filtro-estado" onchange="aplicarFiltros()">
+          <option value="">Todos los estados</option>
+          <option value="cerrada">Cerradas</option>
+          <option value="abierta">Abiertas</option>
+        </select>
+        <button class="btn btn-gris btn-chico" onclick="limpiarFiltros()">✕ Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Estadísticas resumen -->
+    <div class="stats-bar" id="stats-historial" style="margin-bottom:16px; display:none;">
+      <div class="stat-item">
+        <div class="stat-numero" id="stat-total-charlas">0</div>
+        <div class="stat-label">Total Charlas</div>
+      </div>
+      <div class="stat-item verde">
+        <div class="stat-numero" id="stat-total-asistentes">0</div>
+        <div class="stat-label">Total Asistentes</div>
+      </div>
+      <div class="stat-item naranja">
+        <div class="stat-numero" id="stat-este-mes">0</div>
+        <div class="stat-label">Este Mes</div>
+      </div>
+    </div>
+
+    <!-- Lista de charlas -->
+    <div id="lista-charlas"></div>
+
+    <!-- Estado vacío -->
+    <div id="estado-vacio" class="vacio oculto">
+      <div class="icono">📋</div>
+      <p>No se encontraron charlas con los filtros aplicados.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODAL DETALLE DE CHARLA ═══ -->
+<div class="modal-fondo" id="modal-detalle">
+  <div class="modal" style="max-width:600px; max-height:90vh; overflow-y:auto;">
+    <div class="modal-titulo">📄 Detalle de la Charla</div>
+
+    <div id="detalle-contenido"></div>
+
+    <div class="modal-botones" style="flex-wrap:wrap;">
+      <button class="btn btn-gris"      onclick="cerrarModalDetalle()">Cerrar</button>
+      <button class="btn btn-primario"  id="btn-reenviar-correo" onclick="reenviarCorreo()">📧 Reenviar por Correo</button>
+      <button class="btn btn-verde"     id="btn-regenrar-pdf"    onclick="regenerarPDF()">📄 Descargar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CAMBIO DE CONTRASEÑA ═══ -->
+<div class="modal-fondo" id="modal-cambio-pass">
+  <div class="modal">
+    <div class="modal-titulo">🔑 Cambiar Contraseña EHS</div>
+    <div class="form-grupo">
+      <label>Contraseña actual</label>
+      <input type="password" id="pass-actual" placeholder="Contraseña actual">
+    </div>
+    <div class="form-grupo">
+      <label>Nueva contraseña</label>
+      <input type="password" id="pass-nueva" placeholder="Nueva contraseña (mín. 6 caracteres)">
+    </div>
+    <div class="form-grupo">
+      <label>Confirmar nueva contraseña</label>
+      <input type="password" id="pass-confirmar" placeholder="Repetir nueva contraseña">
+    </div>
+    <div class="error-msg" id="pass-cambio-error" style="display:block; visibility:hidden;">Error</div>
+    <div class="modal-botones">
+      <button class="btn btn-gris" onclick="cerrarCambioPass()">Cancelar</button>
+      <button class="btn btn-primario" onclick="guardarNuevaPass()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY CARGA ═══ -->
+<div class="modal-fondo" id="overlay-hist" style="background:rgba(0,0,0,0.65); display:none;">
+  <div style="text-align:center; color:#fff;">
+    <div class="spinner" style="margin:0 auto 14px; width:44px; height:44px; border-width:5px;"></div>
+    <div id="texto-carga-hist" style="font-size:0.95rem; font-weight:600;">Procesando...</div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="js/database.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/email.js"></script>
+
+<script>
+// ══════════════════════════════════════════════
+//  Estado
+// ══════════════════════════════════════════════
+let todasLasCharlas = [];
+let charlaDetalleActiva = null;
+let sesionEHSActiva = false;
+
+// ══════════════════════════════════════════════
+//  INICIALIZACIÓN
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  await DB.inicializar();
+  // Si ya hay sesión en esta pestaña, ir directo al historial
+  if (sessionStorage.getItem('ehs_sesion') === '1') {
+    mostrarHistorial();
+  }
+});
+
+// ══════════════════════════════════════════════
+//  LOGIN EHS
+// ══════════════════════════════════════════════
+function verificarAcceso() {
+  const pass = document.getElementById('input-pass').value;
+  if (DB.ehs.verificar(pass)) {
+    document.getElementById('pass-error').classList.remove('visible');
+    sessionStorage.setItem('ehs_sesion', '1');
+    mostrarHistorial();
+  } else {
+    document.getElementById('pass-error').classList.add('visible');
+    document.getElementById('input-pass').value = '';
+    document.getElementById('input-pass').focus();
+  }
+}
+
+function cerrarSesionEHS() {
+  sessionStorage.removeItem('ehs_sesion');
+  document.getElementById('pantalla-historial').classList.add('oculto');
+  document.getElementById('pantalla-login').style.display = 'block';
+  document.getElementById('input-pass').value = '';
+}
+
+// ══════════════════════════════════════════════
+//  CARGAR HISTORIAL
+// ══════════════════════════════════════════════
+async function mostrarHistorial() {
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('pantalla-historial').classList.remove('oculto');
+  sesionEHSActiva = true;
+  await cargarCharlas();
+}
+
+async function cargarCharlas() {
+  todasLasCharlas = await DB.charlas.todas();
+  calcularEstadisticas();
+  aplicarFiltros();
+}
+
+function calcularEstadisticas() {
+  const ahora  = new Date();
+  const mesAct = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,'0')}`;
+  let totalAsist = 0;
+  let esMes = 0;
+
+  todasLasCharlas.forEach(c => {
+    totalAsist += c.totalAsistentes || 0;
+    if (c.fecha && c.fecha.startsWith(mesAct)) esMes++;
+  });
+
+  document.getElementById('stat-total-charlas').textContent    = todasLasCharlas.length;
+  document.getElementById('stat-total-asistentes').textContent = totalAsist;
+  document.getElementById('stat-este-mes').textContent         = esMes;
+  document.getElementById('stats-historial').style.display     = todasLasCharlas.length ? 'grid' : 'none';
+  document.getElementById('total-charlas-texto').textContent   =
+    `${todasLasCharlas.length} charla(s) registrada(s)`;
+}
+
+// ══════════════════════════════════════════════
+//  FILTROS
+// ══════════════════════════════════════════════
+function aplicarFiltros() {
+  const texto  = document.getElementById('filtro-texto').value.toLowerCase().trim();
+  const mes    = document.getElementById('filtro-mes').value;
+  const estado = document.getElementById('filtro-estado').value;
+
+  let filtradas = todasLasCharlas.filter(c => {
+    const matchTexto  = !texto  || (c.tema||'').toLowerCase().includes(texto) || (c.capacitador||'').toLowerCase().includes(texto) || (c.sede||'').toLowerCase().includes(texto);
+    const matchMes    = !mes    || (c.fecha||'').startsWith(mes);
+    const matchEstado = !estado || c.estado === estado;
+    return matchTexto && matchMes && matchEstado;
+  });
+
+  renderizarLista(filtradas);
+}
+
+function limpiarFiltros() {
+  document.getElementById('filtro-texto').value  = '';
+  document.getElementById('filtro-mes').value    = '';
+  document.getElementById('filtro-estado').value = '';
+  aplicarFiltros();
+}
+
+// ══════════════════════════════════════════════
+//  RENDERIZAR LISTA
+// ══════════════════════════════════════════════
+function renderizarLista(lista) {
+  const contenedor = document.getElementById('lista-charlas');
+  const vacio      = document.getElementById('estado-vacio');
+
+  if (!lista.length) {
+    contenedor.innerHTML = '';
+    vacio.classList.remove('oculto');
+    return;
+  }
+  vacio.classList.add('oculto');
+
+  contenedor.innerHTML = lista.map(c => {
+    const f = formatearFechaCorta(c.fecha);
+    const badgeEstado = c.estado === 'cerrada'
+      ? '<span style="background:#dcfce7;color:#15803d;border-radius:4px;padding:2px 8px;font-size:0.72rem;font-weight:600;">✅ Cerrada</span>'
+      : '<span style="background:#fef9c3;color:#92400e;border-radius:4px;padding:2px 8px;font-size:0.72rem;font-weight:600;">⏳ Abierta</span>';
+
+    const tipos = (c.tiposActividad||[]).join(', ') || '—';
+
+    return `
+      <div class="historial-item" onclick="verDetalle(${c.id})">
+        <div class="historial-fecha">
+          <div class="dia">${f.dia}</div>
+          <div class="mes">${f.mes}</div>
+        </div>
+        <div class="historial-info">
+          <h4>${c.tema || 'Sin tema'}</h4>
+          <p>📍 ${c.sede||'—'} · 👤 ${c.capacitador||'—'} · 👥 ${c.totalAsistentes||0} asistentes · ${tipos}</p>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
+          ${badgeEstado}
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-gris btn-chico" onclick="event.stopPropagation(); descargarDirecto(${c.id})" title="Descargar PDF">📄</button>
+            <button class="btn btn-gris btn-chico" onclick="event.stopPropagation(); reenviarDirecto(${c.id})" title="Reenviar correo">📧</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  VER DETALLE
+// ══════════════════════════════════════════════
+async function verDetalle(charlaId) {
+  const charla      = await DB.charlas.obtener(charlaId);
+  const asistentes  = await DB.asistencias.porCharla(charlaId);
+  charlaDetalleActiva = { charla, asistentes };
+
+  const tipos = (charla.tiposActividad||[]).join(', ') || '—';
+
+  document.getElementById('detalle-contenido').innerHTML = `
+    <div style="background:#f8fafc; border-radius:8px; padding:14px; margin-bottom:14px; font-size:0.88rem; line-height:2;">
+      <b>Tema:</b> ${charla.tema||'—'}<br>
+      <b>Fecha:</b> ${formatearFecha(charla.fecha)}<br>
+      <b>Sede:</b> ${charla.sede||'—'}<br>
+      <b>Capacitador:</b> ${charla.capacitador||'—'}<br>
+      <b>Tipo de actividad:</b> ${tipos}<br>
+      <b>Horas:</b> ${charla.horas||'—'}<br>
+      <b>Total asistentes:</b> ${asistentes.length}<br>
+      <b>Estado:</b> ${charla.estado||'—'}<br>
+      <b>Correos:</b> ${(charla.correos||[]).join(', ')||'—'}<br>
+    </div>
+    <div style="overflow-x:auto; max-height:300px; overflow-y:auto;">
+      <table class="tabla-registro">
+        <thead>
+          <tr><th>#</th><th>Apellidos y Nombres</th><th>DNI</th><th>Hora</th><th>Firma</th></tr>
+        </thead>
+        <tbody>
+          ${asistentes.map(a => `
+            <tr>
+              <td style="font-weight:700;">${a.orden}</td>
+              <td style="font-size:0.82rem;">${a.nombre}</td>
+              <td style="font-size:0.82rem;">${a.dni}</td>
+              <td><span class="badge-hora">${formatearHora(a.horaRegistro)}</span></td>
+              <td style="text-align:center;">${
+                a.firma === '__timestamp__' ? '⏱' :
+                a.firma === '__huella__'    ? '👆' :
+                a.firma                    ? '✍️' : '—'
+              }</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('modal-detalle').classList.add('visible');
+}
+
+function cerrarModalDetalle() {
+  document.getElementById('modal-detalle').classList.remove('visible');
+  charlaDetalleActiva = null;
+}
+
+// ══════════════════════════════════════════════
+//  DESCARGAR PDF
+// ══════════════════════════════════════════════
+async function descargarDirecto(charlaId) {
+  mostrarOverlay('Generando PDF...');
+  try {
+    const charla     = await DB.charlas.obtener(charlaId);
+    const asistentes = await DB.asistencias.porCharla(charlaId);
+    const blob       = await GenerarPDF.crear(charla, asistentes);
+    GenerarPDF.descargar(blob, nombreArchivoPDF(charla));
+    mostrarToast('PDF descargado', 'exito');
+  } catch(e) {
+    mostrarToast('Error al generar PDF: ' + e.message, 'error');
+  } finally {
+    ocultarOverlay();
+  }
+}
+
+async function regenerarPDF() {
+  if (!charlaDetalleActiva) return;
+  cerrarModalDetalle();
+  await descargarDirecto(charlaDetalleActiva.charla.id);
+}
+
+// ══════════════════════════════════════════════
+//  REENVIAR CORREO
+// ══════════════════════════════════════════════
+async function reenviarDirecto(charlaId) {
+  mostrarOverlay('Reenviando correo...');
+  try {
+    const charla     = await DB.charlas.obtener(charlaId);
+    const asistentes = await DB.asistencias.porCharla(charlaId);
+    const blob       = await GenerarPDF.crear(charla, asistentes);
+    await Correo.enviar({
+      destinatarios: charla.correos || [],
+      asunto: `[REENVÍO] Charla — ${charla.tema} — ${formatearFecha(charla.fecha)}`,
+      cuerpo: `Reenvío del registro de asistencia.<br><b>Tema:</b> ${charla.tema}<br><b>Asistentes:</b> ${asistentes.length}`,
+      pdfBlob: blob,
+      nombreArchivo: nombreArchivoPDF(charla)
+    });
+    mostrarToast('Correo reenviado correctamente', 'exito');
+  } catch(e) {
+    mostrarToast('Error al reenviar: ' + e.message, 'error');
+  } finally {
+    ocultarOverlay();
+  }
+}
+
+async function reenviarCorreo() {
+  if (!charlaDetalleActiva) return;
+  cerrarModalDetalle();
+  await reenviarDirecto(charlaDetalleActiva.charla.id);
+}
+
+// ══════════════════════════════════════════════
+//  CAMBIO DE CONTRASEÑA
+// ══════════════════════════════════════════════
+function mostrarCambioPass() {
+  document.getElementById('pass-actual').value    = '';
+  document.getElementById('pass-nueva').value     = '';
+  document.getElementById('pass-confirmar').value = '';
+  const err = document.getElementById('pass-cambio-error');
+  err.style.visibility = 'hidden';
+  document.getElementById('modal-cambio-pass').classList.add('visible');
+}
+
+function cerrarCambioPass() {
+  document.getElementById('modal-cambio-pass').classList.remove('visible');
+}
+
+function guardarNuevaPass() {
+  const actual     = document.getElementById('pass-actual').value;
+  const nueva      = document.getElementById('pass-nueva').value;
+  const confirmar  = document.getElementById('pass-confirmar').value;
+  const err        = document.getElementById('pass-cambio-error');
+
+  if (!actual || !nueva || !confirmar) {
+    err.textContent = 'Complete todos los campos.'; err.style.visibility = 'visible'; return;
+  }
+  if (nueva.length < 6) {
+    err.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.'; err.style.visibility = 'visible'; return;
+  }
+  if (nueva !== confirmar) {
+    err.textContent = 'Las contraseñas nuevas no coinciden.'; err.style.visibility = 'visible'; return;
+  }
+  if (!DB.ehs.cambiarPass(actual, nueva)) {
+    err.textContent = 'La contraseña actual es incorrecta.'; err.style.visibility = 'visible'; return;
+  }
+
+  cerrarCambioPass();
+  mostrarToast('Contraseña actualizada correctamente', 'exito');
+}
+
+// ══════════════════════════════════════════════
+//  OVERLAY
+// ══════════════════════════════════════════════
+function mostrarOverlay(texto) {
+  document.getElementById('texto-carga-hist').textContent = texto;
+  document.getElementById('overlay-hist').style.display = 'flex';
+}
+function ocultarOverlay() {
+  document.getElementById('overlay-hist').style.display = 'none';
+}
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>

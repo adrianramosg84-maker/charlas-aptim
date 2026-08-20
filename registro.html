@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Registro de Asistencia — APTIM PERÚ</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a3a5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Charlas APTIM">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+</head>
+<body>
+
+<!-- ═══ ENCABEZADO ═══ -->
+<header class="header">
+  <div class="header-logo">🦺</div>
+  <div class="header-texto">
+    <h1 id="header-tema">Cargando...</h1>
+    <p  id="header-sub">APTIM PERÚ — Registro de Asistencia</p>
+  </div>
+  <nav class="header-nav">
+    <a href="index.html"     class="btn-nav">📋 Nueva</a>
+    <a href="historial.html" class="btn-nav">📂 Historial</a>
+  </nav>
+</header>
+
+<!-- ═══ CONTENIDO ═══ -->
+<div class="contenedor-ancho">
+
+  <!-- ── Estadísticas en tiempo real ── -->
+  <div class="stats-bar" style="margin-top:16px;">
+    <div class="stat-item verde">
+      <div class="stat-numero" id="stat-registrados">0</div>
+      <div class="stat-label">Registrados</div>
+    </div>
+    <div class="stat-item naranja">
+      <div class="stat-numero" id="stat-pagina">1</div>
+      <div class="stat-label">Página actual</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-numero" id="stat-total-paginas">1</div>
+      <div class="stat-label">Total páginas</div>
+    </div>
+  </div>
+
+  <!-- Layout 2 columnas en tablet, 1 en celular -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;" id="grid-principal">
+
+    <!-- ── COLUMNA IZQUIERDA: Escáner ── -->
+    <div>
+
+      <!-- Área de cámara -->
+      <div class="card" style="padding:16px;">
+        <div class="card-titulo"><span class="icono">📷</span> Escanear Fotocheck</div>
+
+        <div class="scanner-area" id="scanner-area">
+          <video id="video-scanner" autoplay muted playsinline></video>
+          <div class="scanner-overlay">
+            <div class="scanner-marco">
+              <div class="scanner-linea"></div>
+            </div>
+          </div>
+          <div class="scanner-status" id="scanner-status">Iniciando cámara...</div>
+        </div>
+
+        <!-- Botones de cámara -->
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-primario btn-chico" id="btn-camara" onclick="toggleCamara()" style="flex:1;">
+            ⏸ Pausar
+          </button>
+          <button class="btn btn-gris btn-chico" onclick="cambiarCamara()" style="flex:1;">
+            🔄 Cambiar cámara
+          </button>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Búsqueda manual -->
+        <div class="form-grupo mb-8">
+          <label style="font-size:0.83rem;">Buscar por nombre o DNI:</label>
+          <div class="buscador-wrap">
+            <input type="text" id="input-busqueda"
+                   placeholder="Nombre o DNI del trabajador..."
+                   autocomplete="off"
+                   oninput="buscarTrabajador(this.value)"
+                   onkeydown="teclasBusqueda(event)">
+            <div class="buscador-resultados" id="resultados-busqueda"></div>
+          </div>
+        </div>
+
+        <!-- Entrada manual DNI (también captura pistola USB) -->
+        <div class="form-grupo">
+          <label style="font-size:0.83rem;">Ingresar DNI directo (lector USB / manual):</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="input-dni-directo"
+                   placeholder="DNI..."
+                   maxlength="12"
+                   inputmode="numeric"
+                   onkeydown="teclaDNI(event)"
+                   style="font-size:1.1rem; font-weight:700; letter-spacing:2px;">
+            <button class="btn btn-verde btn-chico" onclick="registrarDesdeDNI()">✓ OK</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultado del último scan -->
+      <div id="resultado-scan" style="display:none; margin-bottom:16px;"></div>
+
+    </div><!-- /col izq -->
+
+    <!-- ── COLUMNA DERECHA: Lista de asistentes ── -->
+    <div>
+      <div class="card" style="padding:16px;">
+        <div class="card-titulo" style="justify-content:space-between;">
+          <span><span class="icono">📝</span> Asistentes Registrados</span>
+          <span class="pagina-indicador" id="indicador-pagina">Pág 1 de 1</span>
+        </div>
+
+        <div id="tabla-wrap" style="overflow-x:auto; max-height:420px; overflow-y:auto;">
+          <table class="tabla-registro" id="tabla-asistentes">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Apellidos y Nombres</th>
+                <th>DNI</th>
+                <th>Hora</th>
+                <th>Firma</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-asistentes">
+              <tr id="fila-vacia">
+                <td colspan="5" style="text-align:center; color:#9ca3af; padding:30px; font-size:0.85rem;">
+                  📋 Esperando primer registro...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Nota de página -->
+        <div id="nota-nueva-pagina" style="display:none; background:#eff6ff; border-radius:6px; padding:8px 12px; margin-top:10px; font-size:0.8rem; color:#1d4ed8; text-align:center;">
+          📄 Se generará una nueva página del formato cada 20 trabajadores
+        </div>
+      </div>
+    </div><!-- /col der -->
+
+  </div><!-- /grid -->
+
+  <!-- ── BOTÓN CERRAR CHARLA ── -->
+  <div style="margin-top:8px; display:flex; gap:12px; flex-wrap:wrap;">
+    <button class="btn btn-rojo btn-grande" style="flex:1;" onclick="confirmarCierre()">
+      📄 CERRAR CHARLA Y GENERAR PDF
+    </button>
+    <button class="btn btn-gris" onclick="window.location.href='index.html'" style="padding:16px 20px;">
+      ← Volver
+    </button>
+  </div>
+
+</div><!-- /contenedor-ancho -->
+
+<!-- ═══ MODAL FIRMA TRABAJADOR ═══ -->
+<div class="modal-fondo" id="modal-firma">
+  <div class="modal">
+    <div class="modal-titulo">✍️ Firma del Trabajador</div>
+
+    <div id="info-trabajador-modal" style="background:#f0fdf4; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+      <div style="font-weight:700; font-size:0.95rem;" id="modal-nombre"></div>
+      <div style="font-size:0.8rem; color:#6b7280; margin-top:3px;" id="modal-detalle"></div>
+    </div>
+
+    <!-- Canvas firma -->
+    <div id="wrap-firma-modal" class="">
+      <label style="font-size:0.83rem; font-weight:600; margin-bottom:6px; display:block;">
+        Firme aquí con el dedo:
+      </label>
+      <div class="firma-wrap" id="area-firma-modal">
+        <canvas id="canvas-firma-modal" height="130"></canvas>
+        <div class="firma-placeholder">
+          <span class="icono-firma">✍️</span>
+          <span>Firme aquí</span>
+        </div>
+      </div>
+      <button class="btn-limpiar-firma" onclick="limpiarFirmaModal()">🗑 Limpiar</button>
+    </div>
+
+    <!-- Huella digital -->
+    <div id="wrap-huella-modal" class="oculto">
+      <button class="btn btn-primario btn-bloque" id="btn-huella-modal" onclick="capturarHuellaModal()">
+        👆 Colocar Huella Digital
+      </button>
+      <div id="estado-huella-modal" style="text-align:center; font-size:0.82rem; color:#6b7280; margin-top:8px;"></div>
+    </div>
+
+    <div class="modal-botones">
+      <button class="btn btn-gris" onclick="cancelarFirma()">Cancelar</button>
+      <button class="btn btn-verde" id="btn-confirmar-firma" onclick="confirmarFirma()">
+        ✅ Confirmar Registro
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CONFIRMACIÓN CIERRE ═══ -->
+<div class="modal-fondo" id="modal-cierre">
+  <div class="modal">
+    <div class="modal-titulo">📄 Cerrar Charla</div>
+    <p style="font-size:0.9rem; color:#374151; margin-bottom:8px;">
+      ¿Confirma que desea cerrar la charla y generar el PDF?
+    </p>
+    <div id="resumen-cierre" style="background:#f3f4f6; border-radius:8px; padding:12px; font-size:0.85rem; line-height:1.8;">
+    </div>
+    <div class="modal-botones">
+      <button class="btn btn-gris" onclick="cerrarModalCierre()">Cancelar</button>
+      <button class="btn btn-verde" id="btn-generar-pdf" onclick="cerrarYGenerarPDF()">
+        📄 Generar PDF y Enviar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL TRABAJADOR NO ENCONTRADO ═══ -->
+<div class="modal-fondo" id="modal-manual">
+  <div class="modal">
+    <div class="modal-titulo">⚠️ Trabajador No Encontrado</div>
+    <p style="font-size:0.85rem; color:#6b7280; margin-bottom:12px;">
+      El DNI <strong id="modal-dni-desconocido"></strong> no está en la lista maestra.
+      Puede registrarlo manualmente:
+    </p>
+    <div class="form-grupo">
+      <label>Apellidos y Nombres <span class="req">*</span></label>
+      <input type="text" id="input-nombre-manual" placeholder="APELLIDOS Y NOMBRES" style="text-transform:uppercase;">
+    </div>
+    <div class="form-grupo">
+      <label>Empresa / Área</label>
+      <input type="text" id="input-empresa-manual" value="APTIM / SS.GG">
+    </div>
+    <div class="form-grupo">
+      <label>Cargo</label>
+      <input type="text" id="input-cargo-manual" placeholder="Cargo del trabajador">
+    </div>
+    <div class="modal-botones">
+      <button class="btn btn-gris" onclick="cerrarModalManual()">Cancelar</button>
+      <button class="btn btn-primario" onclick="registrarManual()">✓ Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY DE CARGA ═══ -->
+<div class="modal-fondo" id="overlay-carga" style="background:rgba(0,0,0,0.7);">
+  <div style="text-align:center; color:#fff;">
+    <div class="spinner" style="margin: 0 auto 16px;width:48px;height:48px;border-width:5px;"></div>
+    <div id="texto-carga" style="font-size:1rem; font-weight:600;">Generando PDF...</div>
+    <div id="subtexto-carga" style="font-size:0.82rem; opacity:0.8; margin-top:6px;"></div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="js/database.js"></script>
+<script src="js/app.js"></script>
+<script src="js/firma.js"></script>
+<script src="js/scanner.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/email.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  Estado global de la pantalla de registro
+// ═══════════════════════════════════════════════════════
+let config         = null;   // configuración de la charla
+let charlaId       = null;   // id en IndexedDB
+let asistentes     = [];     // lista de asistentes registrados en esta sesión
+let trabajadorPendiente = null; // trabajador esperando firma
+let camaraActiva   = false;
+let camaraFacingMode = 'environment';
+
+// ═══════════════════════════════════════════════════════
+//  INICIALIZACIÓN
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  // Verificar que hay configuración de charla
+  config = obtenerConfigCharla();
+  if (!config) {
+    mostrarToast('No hay una charla configurada. Redirigiendo...', 'aviso');
+    setTimeout(() => window.location.href = 'index.html', 1500);
+    return;
+  }
+
+  // Inicializar DB
+  await DB.inicializar();
+
+  // Guardar la charla en la BD y obtener su ID
+  charlaId = sessionStorage.getItem('charla_id_activa');
+  if (!charlaId) {
+    charlaId = await DB.charlas.guardar({
+      ...config,
+      estado: 'abierta',
+      totalAsistentes: 0
+    });
+    sessionStorage.setItem('charla_id_activa', charlaId);
+  }
+
+  // Cargar asistentes previos (si se recargó la página)
+  asistentes = await DB.asistencias.porCharla(charlaId);
+
+  // Actualizar UI
+  actualizarHeader();
+  actualizarTabla();
+  actualizarStats();
+
+  // Iniciar escáner
+  iniciarEscaner();
+
+  // Conectar pistola USB / entrada de teclado
+  Scanner.conectarInputUSB('input-dni-directo', procesarDNI);
+
+  // Cerrar dropdowns al tocar fuera
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.buscador-wrap')) {
+      document.getElementById('resultados-busqueda').classList.remove('visible');
+    }
+  });
+
+  // Ocultar overlay de carga
+  document.getElementById('overlay-carga').classList.remove('visible');
+
+  // Responsive: colapsar grid en móvil
+  ajustarLayout();
+  window.addEventListener('resize', ajustarLayout);
+});
+
+function ajustarLayout() {
+  const grid = document.getElementById('grid-principal');
+  if (window.innerWidth < 700) {
+    grid.style.gridTemplateColumns = '1fr';
+  } else {
+    grid.style.gridTemplateColumns = '1fr 1fr';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  HEADER
+// ═══════════════════════════════════════════════════════
+function actualizarHeader() {
+  if (!config) return;
+  document.getElementById('header-tema').textContent = config.tema || 'Charla de 5 Min';
+  document.getElementById('header-sub').textContent  =
+    `${formatearFecha(config.fecha)} · ${config.sede} · ${config.capacitador}`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  ESCÁNER
+// ═══════════════════════════════════════════════════════
+async function iniciarEscaner() {
+  try {
+    await Scanner.iniciar('video-scanner', procesarDNI);
+    camaraActiva = true;
+    document.getElementById('btn-camara').textContent = '⏸ Pausar';
+    document.getElementById('scanner-status').textContent = '📷 Apunte el fotocheck a la cámara...';
+  } catch (err) {
+    camaraActiva = false;
+    document.getElementById('scanner-status').textContent = '❌ ' + err.message;
+    document.getElementById('btn-camara').textContent = '▶ Iniciar';
+    mostrarToast('Cámara no disponible. Use el campo DNI manual.', 'aviso', 5000);
+  }
+}
+
+function toggleCamara() {
+  if (camaraActiva) {
+    Scanner.pausar();
+    camaraActiva = false;
+    document.getElementById('btn-camara').textContent = '▶ Reanudar';
+    document.getElementById('scanner-status').textContent = '⏸ Cámara pausada';
+  } else {
+    Scanner.reanudar();
+    camaraActiva = true;
+    document.getElementById('btn-camara').textContent = '⏸ Pausar';
+    document.getElementById('scanner-status').textContent = '📷 Apunte el fotocheck a la cámara...';
+  }
+}
+
+async function cambiarCamara() {
+  Scanner.detener();
+  camaraFacingMode = (camaraFacingMode === 'environment') ? 'user' : 'environment';
+  await iniciarEscaner();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROCESAMIENTO DE DNI (desde escáner, USB o manual)
+// ═══════════════════════════════════════════════════════
+async function procesarDNI(dni) {
+  dni = String(dni).trim();
+
+  // Verificar duplicado
+  const duplicado = await DB.asistencias.esDuplicado(charlaId, dni);
+  if (duplicado) {
+    const existente = asistentes.find(a => a.dni === dni);
+    const hora = existente ? formatearHora(existente.horaRegistro) : '';
+    mostrarResultado({
+      tipo: 'advertencia',
+      icono: '⚠️',
+      titulo: 'Ya registrado',
+      mensaje: (existente ? existente.nombre : dni) + ' ya fue registrado a las ' + hora
+    });
+    mostrarToast('Este trabajador ya está registrado', 'aviso');
+    return;
+  }
+
+  // Buscar en lista maestra
+  const trabajador = await DB.personal.buscarDNI(dni);
+  if (trabajador) {
+    trabajadorPendiente = { ...trabajador };
+    procesarRegistro(trabajadorPendiente);
+  } else {
+    // No encontrado — preguntar si registrar manual
+    trabajadorPendiente = { dni, nombre: '', empresa: 'APTIM / SS.GG', cargo: '' };
+    document.getElementById('modal-dni-desconocido').textContent = dni;
+    document.getElementById('input-nombre-manual').value = '';
+    document.getElementById('input-empresa-manual').value = 'APTIM / SS.GG';
+    document.getElementById('input-cargo-manual').value = '';
+    document.getElementById('modal-manual').classList.add('visible');
+    Scanner.pausar();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROCESAR REGISTRO (mostrar firma o registrar directo)
+// ═══════════════════════════════════════════════════════
+function procesarRegistro(trabajador) {
+  const metodo = config.metodo || 'timestamp';
+
+  if (metodo === 'timestamp') {
+    // Registro directo sin firma
+    guardarAsistencia(trabajador, '__timestamp__');
+  } else if (metodo === 'firma') {
+    // Mostrar modal de firma
+    abrirModalFirma(trabajador, 'firma');
+  } else if (metodo === 'huella') {
+    // Mostrar modal de huella
+    abrirModalFirma(trabajador, 'huella');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  MODAL DE FIRMA
+// ═══════════════════════════════════════════════════════
+function abrirModalFirma(trabajador, tipo) {
+  Scanner.pausar();
+  document.getElementById('modal-nombre').textContent  = trabajador.nombre || 'TRABAJADOR MANUAL';
+  document.getElementById('modal-detalle').textContent =
+    `DNI: ${trabajador.dni} · ${trabajador.cargo || ''} · ${trabajador.empresa || ''}`;
+
+  const wrapFirma  = document.getElementById('wrap-firma-modal');
+  const wrapHuella = document.getElementById('wrap-huella-modal');
+  const btnConf    = document.getElementById('btn-confirmar-firma');
+
+  if (tipo === 'firma') {
+    wrapFirma.classList.remove('oculto');
+    wrapHuella.classList.add('oculto');
+    btnConf.textContent = '✅ Confirmar Firma';
+
+    // Inicializar pad de firma
+    setTimeout(() => {
+      Firma.limpiar('canvas-firma-modal');
+      document.getElementById('area-firma-modal').classList.remove('tiene-firma');
+      Firma.init('canvas-firma-modal', {
+        altura: 130,
+        onFirma: () => {
+          document.getElementById('area-firma-modal').classList.add('tiene-firma');
+        },
+        onLimpiar: () => {
+          document.getElementById('area-firma-modal').classList.remove('tiene-firma');
+        }
+      });
+    }, 100);
+
+  } else if (tipo === 'huella') {
+    wrapFirma.classList.add('oculto');
+    wrapHuella.classList.remove('oculto');
+    btnConf.textContent = '✅ Confirmar con Huella';
+    document.getElementById('estado-huella-modal').textContent = 'Presione el botón para registrar la huella';
+    document.getElementById('btn-huella-modal').disabled = false;
+    document.getElementById('btn-huella-modal').textContent = '👆 Colocar Huella Digital';
+    btnConf.dataset.huellaOk = 'false';
+  }
+
+  document.getElementById('modal-firma').classList.add('visible');
+}
+
+function limpiarFirmaModal() {
+  Firma.limpiar('canvas-firma-modal');
+  document.getElementById('area-firma-modal').classList.remove('tiene-firma');
+}
+
+async function capturarHuellaModal() {
+  const btn    = document.getElementById('btn-huella-modal');
+  const estado = document.getElementById('estado-huella-modal');
+  const btnConf = document.getElementById('btn-confirmar-firma');
+  btn.disabled = true;
+  estado.textContent = '⏳ Esperando huella...';
+  estado.style.color = '#6b7280';
+
+  try {
+    await Firma.registrarHuella(trabajadorPendiente.dni);
+    estado.textContent = '✅ Huella registrada correctamente';
+    estado.style.color = '#16a34a';
+    btn.textContent    = '✅ Huella Capturada';
+    btnConf.dataset.huellaOk = 'true';
+  } catch (err) {
+    estado.textContent = '❌ ' + err.message;
+    estado.style.color = '#dc2626';
+    btn.disabled = false;
+  }
+}
+
+function confirmarFirma() {
+  const metodo = config.metodo || 'timestamp';
+  let firmaData = null;
+
+  if (metodo === 'firma') {
+    if (!Firma.tieneFirma('canvas-firma-modal')) {
+      mostrarToast('Por favor firme antes de continuar', 'aviso');
+      return;
+    }
+    firmaData = Firma.obtenerDataURL('canvas-firma-modal');
+  } else if (metodo === 'huella') {
+    const btnConf = document.getElementById('btn-confirmar-firma');
+    if (btnConf.dataset.huellaOk !== 'true') {
+      mostrarToast('Registre la huella antes de continuar', 'aviso');
+      return;
+    }
+    firmaData = '__huella__';
+  }
+
+  document.getElementById('modal-firma').classList.remove('visible');
+  guardarAsistencia(trabajadorPendiente, firmaData);
+  Scanner.reanudar();
+}
+
+function cancelarFirma() {
+  document.getElementById('modal-firma').classList.remove('visible');
+  trabajadorPendiente = null;
+  Scanner.reanudar();
+  mostrarResultado(null);
+}
+
+// ═══════════════════════════════════════════════════════
+//  GUARDAR ASISTENCIA
+// ═══════════════════════════════════════════════════════
+async function guardarAsistencia(trabajador, firmaData) {
+  const registro = {
+    charlaId,
+    dni:          String(trabajador.dni),
+    nombre:       trabajador.nombre || '',
+    empresa:      trabajador.empresa || 'APTIM / SS.GG',
+    cargo:        trabajador.cargo || '',
+    horaRegistro: horaAhora(),
+    firma:        firmaData,
+    orden:        asistentes.length + 1
+  };
+
+  try {
+    await DB.asistencias.registrar(registro);
+    asistentes.push(registro);
+
+    // Actualizar charla en BD
+    await DB.charlas.actualizar({
+      ...config,
+      id: charlaId,
+      estado: 'abierta',
+      totalAsistentes: asistentes.length
+    });
+
+    actualizarTabla();
+    actualizarStats();
+    mostrarResultado({
+      tipo: 'exito',
+      icono: '✅',
+      titulo: trabajador.nombre || 'Trabajador',
+      mensaje: trabajador.cargo + ' · ' + formatearHora(registro.horaRegistro)
+    });
+
+    mostrarToast(`${trabajador.nombre || 'Trabajador'} registrado`, 'exito', 2000);
+
+    // Notificar nueva página cada 20
+    if (asistentes.length % 20 === 0) {
+      mostrarToast(`📄 Página ${asistentes.length / 20} completa — nueva hoja del formato`, 'info', 4000);
+    }
+
+  } catch (err) {
+    mostrarToast('Error al guardar: ' + err.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  REGISTRO MANUAL (trabajador no encontrado)
+// ═══════════════════════════════════════════════════════
+function cerrarModalManual() {
+  document.getElementById('modal-manual').classList.remove('visible');
+  trabajadorPendiente = null;
+  Scanner.reanudar();
+}
+
+function registrarManual() {
+  const nombre  = document.getElementById('input-nombre-manual').value.trim().toUpperCase();
+  const empresa = document.getElementById('input-empresa-manual').value.trim();
+  const cargo   = document.getElementById('input-cargo-manual').value.trim();
+
+  if (!nombre) {
+    mostrarToast('El nombre es obligatorio', 'aviso');
+    return;
+  }
+
+  trabajadorPendiente.nombre  = nombre;
+  trabajadorPendiente.empresa = empresa || 'APTIM / SS.GG';
+  trabajadorPendiente.cargo   = cargo;
+
+  document.getElementById('modal-manual').classList.remove('visible');
+  procesarRegistro(trabajadorPendiente);
+}
+
+// ═══════════════════════════════════════════════════════
+//  BÚSQUEDA MANUAL
+// ═══════════════════════════════════════════════════════
+let timerBusqueda = null;
+async function buscarTrabajador(texto) {
+  clearTimeout(timerBusqueda);
+  if (!texto || texto.length < 2) {
+    document.getElementById('resultados-busqueda').classList.remove('visible');
+    return;
+  }
+  timerBusqueda = setTimeout(async () => {
+    const resultados = await DB.personal.buscarNombre(texto);
+    const contenedor = document.getElementById('resultados-busqueda');
+    if (!resultados.length) {
+      contenedor.innerHTML = `<div class="resultado-item" style="color:#9ca3af;">No se encontraron resultados</div>`;
+    } else {
+      contenedor.innerHTML = resultados.slice(0, 8).map(p => `
+        <div class="resultado-item" onclick="seleccionarDeBusqueda('${p.dni}')">
+          <div class="resultado-nombre">${p.nombre}</div>
+          <div class="resultado-detalle">DNI: ${p.dni} · ${p.cargo}</div>
+        </div>`).join('');
+    }
+    contenedor.classList.add('visible');
+  }, 300);
+}
+
+function seleccionarDeBusqueda(dni) {
+  document.getElementById('resultados-busqueda').classList.remove('visible');
+  document.getElementById('input-busqueda').value = '';
+  procesarDNI(dni);
+}
+
+function teclasBusqueda(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('resultados-busqueda').classList.remove('visible');
+  }
+}
+
+function teclaDNI(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    registrarDesdeDNI();
+  }
+}
+
+function registrarDesdeDNI() {
+  const val = document.getElementById('input-dni-directo').value.trim().replace(/\D/g, '');
+  if (!val) return;
+  document.getElementById('input-dni-directo').value = '';
+  procesarDNI(val);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TARJETA DE RESULTADO
+// ═══════════════════════════════════════════════════════
+function mostrarResultado(datos) {
+  const el = document.getElementById('resultado-scan');
+  if (!datos) { el.style.display = 'none'; return; }
+
+  const clases = { exito: '', error: 'error-card', advertencia: 'advertencia-card' };
+  el.innerHTML = `
+    <div class="trabajador-card ${clases[datos.tipo] || ''}">
+      <div class="trabajador-avatar">${datos.icono}</div>
+      <div class="trabajador-info">
+        <h3>${datos.titulo}</h3>
+        <p>${datos.mensaje}</p>
+      </div>
+    </div>`;
+  el.style.display = 'block';
+
+  // Auto-ocultar después de 4s
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  ACTUALIZAR TABLA DE ASISTENTES
+// ═══════════════════════════════════════════════════════
+function actualizarTabla() {
+  const tbody = document.getElementById('tbody-asistentes');
+  if (!asistentes.length) {
+    tbody.innerHTML = `
+      <tr id="fila-vacia">
+        <td colspan="5" style="text-align:center; color:#9ca3af; padding:30px; font-size:0.85rem;">
+          📋 Esperando primer registro...
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = asistentes.map((a, i) => {
+    const firmaIcon = a.firma === '__timestamp__' ? '<span class="badge-solo-scan">⏱</span>'
+      : a.firma === '__huella__' ? '<span class="badge-firma-ok">👆</span>'
+      : a.firma ? '<span class="badge-firma-ok">✍️</span>'
+      : '<span class="badge-solo-scan">—</span>';
+
+    // Resaltar inicio de nueva página cada 20
+    const esInicioHoja = (i > 0 && i % 20 === 0);
+    const estiloFila   = esInicioHoja ? 'border-top:3px solid #3b82f6;' : '';
+
+    return `
+      <tr style="${estiloFila}">
+        <td style="font-weight:700; color:#1a3a5c;">${a.orden}</td>
+        <td style="font-size:0.82rem;">${a.nombre}</td>
+        <td style="font-size:0.82rem;">${a.dni}</td>
+        <td><span class="badge-hora">${formatearHora(a.horaRegistro)}</span></td>
+        <td style="text-align:center;">${firmaIcon}</td>
+      </tr>`;
+  }).join('');
+
+  // Auto-scroll al último
+  const wrap = document.getElementById('tabla-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════
+//  ESTADÍSTICAS
+// ═══════════════════════════════════════════════════════
+function actualizarStats() {
+  const total     = asistentes.length;
+  const pagActual = paginaActual(total);
+  const pagTotal  = calcularPaginas(total);
+
+  document.getElementById('stat-registrados').textContent   = total;
+  document.getElementById('stat-pagina').textContent        = pagActual;
+  document.getElementById('stat-total-paginas').textContent = pagTotal;
+  document.getElementById('indicador-pagina').textContent   = `Pág ${pagActual} de ${pagTotal}`;
+
+  // Mostrar nota de nueva página
+  const nota = document.getElementById('nota-nueva-pagina');
+  nota.style.display = (total > 0 && total % 20 !== 0) ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CIERRE Y GENERACIÓN DE PDF
+// ═══════════════════════════════════════════════════════
+function confirmarCierre() {
+  if (!asistentes.length) {
+    mostrarToast('No hay asistentes registrados', 'aviso');
+    return;
+  }
+
+  const resumen = document.getElementById('resumen-cierre');
+  resumen.innerHTML = `
+    <b>Tema:</b> ${config.tema}<br>
+    <b>Fecha:</b> ${formatearFecha(config.fecha)}<br>
+    <b>Sede:</b> ${config.sede}<br>
+    <b>Capacitador:</b> ${config.capacitador}<br>
+    <b>Total asistentes:</b> ${asistentes.length} persona(s)<br>
+    <b>Páginas del formato:</b> ${calcularPaginas(asistentes.length)}<br>
+    <b>Correos de envío:</b> ${config.correos.join(', ')}
+  `;
+  document.getElementById('modal-cierre').classList.add('visible');
+}
+
+function cerrarModalCierre() {
+  document.getElementById('modal-cierre').classList.remove('visible');
+}
+
+async function cerrarYGenerarPDF() {
+  cerrarModalCierre();
+  Scanner.detener();
+
+  // Mostrar overlay de carga
+  const overlay = document.getElementById('overlay-carga');
+  overlay.classList.add('visible');
+  document.getElementById('texto-carga').textContent    = 'Generando PDF...';
+  document.getElementById('subtexto-carga').textContent = 'Esto puede tomar unos segundos';
+
+  try {
+    // Marcar charla como cerrada
+    await DB.charlas.actualizar({
+      ...config,
+      id: charlaId,
+      estado: 'cerrada',
+      totalAsistentes: asistentes.length,
+      fechaCierre: horaAhora()
+    });
+
+    // Generar PDF
+    document.getElementById('texto-carga').textContent = 'Construyendo formato...';
+    const pdfBlob = await GenerarPDF.crear(config, asistentes);
+
+    // Enviar por correo
+    document.getElementById('texto-carga').textContent    = 'Enviando por correo...';
+    document.getElementById('subtexto-carga').textContent = config.correos.join(', ');
+    const nombrePDF = nombreArchivoPDF(config);
+
+    await Correo.enviar({
+      destinatarios: config.correos,
+      asunto: `Charla de 5 Min — ${config.tema} — ${formatearFecha(config.fecha)}`,
+      cuerpo: `
+        Se adjunta el registro de asistencia de la charla del día ${formatearFecha(config.fecha)}.<br>
+        <b>Tema:</b> ${config.tema}<br>
+        <b>Sede:</b> ${config.sede}<br>
+        <b>Capacitador:</b> ${config.capacitador}<br>
+        <b>Total asistentes:</b> ${asistentes.length}<br>
+      `,
+      pdfBlob,
+      nombreArchivo: nombrePDF
+    });
+
+    // Descargar PDF en el dispositivo
+    GenerarPDF.descargar(pdfBlob, nombrePDF);
+
+    overlay.classList.remove('visible');
+    limpiarConfigCharla();
+    mostrarToast('¡PDF generado y enviado correctamente!', 'exito', 5000);
+
+    setTimeout(() => window.location.href = 'historial.html', 2000);
+
+  } catch (err) {
+    overlay.classList.remove('visible');
+    console.error(err);
+    mostrarToast('Error al generar PDF: ' + err.message, 'error', 6000);
+
+    // Ofrecer descarga local aunque falle el correo
+    if (err.tipoPDF) {
+      mostrarToast('PDF generado. No se pudo enviar por correo.', 'aviso', 5000);
+    }
+  }
+}
+</script>
+
+<!-- ═══ CSS EXTRA PARA ESTA PÁGINA ═══ -->
+<style>
+  #overlay-carga { display: none; }
+  #overlay-carga.visible { display: flex; }
+</style>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>

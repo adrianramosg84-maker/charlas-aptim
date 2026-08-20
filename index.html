@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Charlas 5 Min — APTIM PERÚ</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a3a5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Charlas APTIM">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+</head>
+<body>
+
+<!-- ═══ ENCABEZADO ═══ -->
+<header class="header">
+  <div class="header-logo">🦺</div>
+  <div class="header-texto">
+    <h1>APTIM PERÚ S.A.C.</h1>
+    <p>Sistema de Charlas de 5 Min</p>
+  </div>
+  <nav class="header-nav">
+    <a href="index.html"    class="btn-nav activo">📋 Nueva Charla</a>
+    <a href="historial.html" class="btn-nav">📂 Historial</a>
+  </nav>
+</header>
+
+<!-- ═══ CONTENIDO ═══ -->
+<div class="contenedor">
+
+  <!-- Título de sección -->
+  <div style="margin: 16px 0 12px; display:flex; align-items:center; gap:10px;">
+    <span style="font-size:1.4rem;">📋</span>
+    <div>
+      <h2 style="font-size:1.05rem; font-weight:700; color:#1a3a5c;">Configurar Charla del Día</h2>
+      <p style="font-size:0.8rem; color:#6b7280; margin-top:2px;">Complete los datos antes de iniciar el registro</p>
+    </div>
+  </div>
+
+  <!-- ── CARD 1: Datos generales ── -->
+  <div class="card">
+    <div class="card-titulo"><span class="icono">📅</span> Datos del Entrenamiento</div>
+
+    <!-- Fecha -->
+    <div class="form-grupo">
+      <label for="fecha">Fecha <span class="req">*</span></label>
+      <input type="date" id="fecha" required>
+    </div>
+
+    <!-- Sitio/Sede -->
+    <div class="form-grupo">
+      <label for="sede">Sitio / Sede <span class="req">*</span></label>
+      <input type="text" id="sede" value="PFLGN - PISCO" placeholder="Ej: PFLGN - PISCO" required>
+      <div class="hint">Pre-cargado. Puedes borrarlo y escribir otro.</div>
+    </div>
+
+    <!-- N° Horas -->
+    <div class="form-grupo">
+      <label for="horas">N° de Horas</label>
+      <input type="number" id="horas" min="0.1" max="24" step="0.5" placeholder="Ej: 0.5">
+    </div>
+
+    <!-- Tipo de Actividad -->
+    <div class="form-grupo">
+      <label>Tipo de Actividad</label>
+      <div class="checkgroup" id="tipo-actividad">
+        <label class="check-item" data-valor="Inducción">
+          <input type="checkbox" value="Inducción"> Inducción
+        </label>
+        <label class="check-item" data-valor="Capacitación">
+          <input type="checkbox" value="Capacitación"> Capacitación
+        </label>
+        <label class="check-item" data-valor="Entrenamiento">
+          <input type="checkbox" value="Entrenamiento"> Entrenamiento
+        </label>
+        <label class="check-item" data-valor="Simulacro de Emergencia">
+          <input type="checkbox" value="Simulacro de Emergencia"> Simulacro de Emergencia
+        </label>
+        <label class="check-item" data-valor="Otros">
+          <input type="checkbox" value="Otros"> Otros
+        </label>
+      </div>
+      <div class="otros-texto" id="otros-wrap">
+        <input type="text" id="otros-texto" placeholder="Especifique el tipo de actividad..." style="margin-top:6px;">
+      </div>
+    </div>
+
+    <!-- Tema de la Charla -->
+    <div class="form-grupo">
+      <label for="tema">Tema de la Charla <span class="req">*</span></label>
+      <input type="text" id="tema"
+             placeholder="Escriba el tema de la charla de hoy"
+             required
+             autocomplete="off">
+      <div class="error-msg" id="tema-error">El tema de la charla es obligatorio.</div>
+    </div>
+  </div>
+
+  <!-- ── CARD 2: Capacitador ── -->
+  <div class="card">
+    <div class="card-titulo"><span class="icono">👤</span> Capacitador del Día</div>
+
+    <div class="form-grupo">
+      <label for="capacitador">Nombre del Capacitador <span class="req">*</span></label>
+      <input type="text" id="capacitador"
+             placeholder="Apellidos y Nombres del capacitador"
+             required
+             autocomplete="off">
+      <div class="error-msg" id="capacitador-error">El nombre del capacitador es obligatorio.</div>
+    </div>
+
+    <!-- Firma del capacitador -->
+    <div class="form-grupo" id="firma-capacitador-wrap">
+      <label>Firma del Capacitador <span class="req" id="firma-cap-req">*</span>
+        <span style="font-weight:400; color:#6b7280; font-size:0.78rem;" id="firma-cap-modo">(firma con el dedo)</span>
+      </label>
+      <div class="firma-wrap" id="firma-capacitador-area">
+        <canvas id="canvas-capacitador" height="120"></canvas>
+        <div class="firma-placeholder">
+          <span class="icono-firma">✍️</span>
+          <span>Firme aquí con el dedo</span>
+        </div>
+      </div>
+      <button class="btn-limpiar-firma" id="btn-limpiar-firma-cap" onclick="limpiarFirmaCapacitador()">
+        🗑 Limpiar firma
+      </button>
+      <div class="error-msg" id="firma-cap-error">La firma del capacitador es obligatoria.</div>
+
+      <!-- Huella digital (se muestra si el método es huella) -->
+      <div id="huella-capacitador-wrap" class="oculto" style="margin-top:10px;">
+        <button class="btn btn-gris btn-bloque" id="btn-huella-cap" onclick="registrarHuellaCapacitador()">
+          👆 Registrar Huella del Capacitador
+        </button>
+        <div id="huella-cap-estado" class="mt-8" style="font-size:0.82rem; color:#6b7280; text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CARD 3: Correos de envío ── -->
+  <div class="card">
+    <div class="card-titulo"><span class="icono">📧</span> Correo(s) de Envío</div>
+
+    <!-- Lista de correos agregados -->
+    <div class="correos-lista" id="correos-lista">
+      <!-- Se llenan dinámicamente -->
+    </div>
+    <div id="sin-correos" style="font-size:0.83rem; color:#6b7280; padding:6px 0; display:none;">
+      No hay correos configurados.
+    </div>
+
+    <!-- Agregar correo -->
+    <div class="correo-agregar" style="margin-top:10px;">
+      <div class="correo-input-wrap">
+        <input type="email" id="input-correo"
+               placeholder="correo@empresa.com"
+               autocomplete="off"
+               oninput="filtrarMemoriaCorreos(this.value)"
+               onfocus="filtrarMemoriaCorreos(this.value)"
+               onkeydown="teclaCorreo(event)">
+        <div class="memoria-correos" id="memoria-correos"></div>
+      </div>
+      <button class="btn btn-primario btn-chico" onclick="agregarCorreo()">+ Agregar</button>
+    </div>
+    <div class="error-msg visible" id="correo-error" style="display:none;">Ingrese al menos un correo de envío.</div>
+  </div>
+
+  <!-- ── CARD 4: Método de firma de asistentes ── -->
+  <div class="card">
+    <div class="card-titulo"><span class="icono">✍️</span> Método de Firma de Asistentes</div>
+
+    <div class="metodo-grupo" id="metodo-grupo">
+
+      <label class="metodo-item seleccionado" data-metodo="timestamp">
+        <input type="radio" name="metodo" value="timestamp" checked>
+        <span class="metodo-icono">⏱️</span>
+        <div class="metodo-texto">
+          <strong>Solo Escaneo + Timestamp</strong>
+          <small>Registro automático con fecha y hora exacta. Más rápido.</small>
+        </div>
+      </label>
+
+      <label class="metodo-item" data-metodo="firma">
+        <input type="radio" name="metodo" value="firma">
+        <span class="metodo-icono">✍️</span>
+        <div class="metodo-texto">
+          <strong>Escaneo + Firma en Pantalla</strong>
+          <small>Cada trabajador firma con el dedo. Recomendado para auditorías.</small>
+        </div>
+      </label>
+
+      <label class="metodo-item" data-metodo="huella">
+        <input type="radio" name="metodo" value="huella">
+        <span class="metodo-icono">👆</span>
+        <div class="metodo-texto">
+          <strong>Escaneo + Huella Digital</strong>
+          <small>Requiere dispositivo con sensor biométrico compatible.</small>
+        </div>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── BOTÓN INICIAR ── -->
+  <button class="btn btn-verde btn-bloque btn-grande" id="btn-iniciar" onclick="iniciarCharla()">
+    🚀 INICIAR REGISTRO DE ASISTENCIA
+  </button>
+
+  <p class="text-center text-gris mt-8" style="font-size:0.78rem;">
+    Los campos marcados con <span style="color:#dc2626;">*</span> son obligatorios
+  </p>
+
+</div><!-- /contenedor -->
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="js/database.js"></script>
+<script src="js/firma.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+// ─────────────────────────────────────────────────────────
+//  Lógica de la pantalla index.html
+// ─────────────────────────────────────────────────────────
+
+let correosEnvio   = [];
+let memoriaCorreos = [];
+let firmaCapacitorDataURL = null;
+let huellaCapacitadorRegistrada = false;
+
+// ── Al cargar la página ──
+document.addEventListener('DOMContentLoaded', async () => {
+  // Inicializar BD
+  await DB.inicializar();
+
+  // Fecha de hoy
+  const hoy = new Date();
+  document.getElementById('fecha').value = hoy.toISOString().split('T')[0];
+
+  // Cargar correos en memoria
+  memoriaCorreos = await DB.config.correosMemoria();
+
+  // Inicializar pad de firma del capacitador
+  Firma.init('canvas-capacitador', {
+    onFirma: (dataURL) => {
+      firmaCapacitorDataURL = dataURL;
+      document.getElementById('firma-capacitador-area').classList.add('tiene-firma');
+    },
+    onLimpiar: () => {
+      firmaCapacitorDataURL = null;
+      document.getElementById('firma-capacitador-area').classList.remove('tiene-firma');
+    }
+  });
+
+  // Checkboxes de tipo de actividad
+  document.querySelectorAll('#tipo-actividad .check-item').forEach(label => {
+    label.addEventListener('click', () => {
+      const cb = label.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      label.classList.toggle('marcado', cb.checked);
+      // Mostrar/ocultar campo "Otros"
+      const hayOtros = document.querySelector('.check-item[data-valor="Otros"] input').checked;
+      document.getElementById('otros-wrap').classList.toggle('visible', hayOtros);
+    });
+  });
+
+  // Método de firma — cambio de selección
+  document.querySelectorAll('#metodo-grupo .metodo-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('#metodo-grupo .metodo-item').forEach(i => i.classList.remove('seleccionado'));
+      item.classList.add('seleccionado');
+      item.querySelector('input[type="radio"]').checked = true;
+      actualizarModoFirmaCapacitador();
+    });
+  });
+
+  // Cerrar dropdown de memoria al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.correo-agregar')) {
+      document.getElementById('memoria-correos').classList.remove('visible');
+    }
+  });
+
+  // Cargar correos ya en memoria para mostrar
+  actualizarListaCorreos();
+});
+
+// ── Modo firma del capacitador según método seleccionado ──
+function actualizarModoFirmaCapacitador() {
+  const metodo = document.querySelector('input[name="metodo"]:checked').value;
+  const wrapFirma  = document.getElementById('firma-capacitador-wrap');
+  const modoLabel  = document.getElementById('firma-cap-modo');
+  const wrapHuella = document.getElementById('huella-capacitador-wrap');
+  const canvasWrap = document.getElementById('firma-capacitador-area');
+
+  if (metodo === 'timestamp') {
+    // Sin firma ni huella
+    canvasWrap.style.display   = 'block';
+    wrapHuella.classList.add('oculto');
+    modoLabel.textContent = '(firma con el dedo)';
+    document.getElementById('firma-cap-req').style.display = 'none';
+    firmaCapacitorDataURL = '__timestamp__'; // marca especial
+  } else if (metodo === 'firma') {
+    canvasWrap.style.display = 'block';
+    wrapHuella.classList.add('oculto');
+    modoLabel.textContent = '(firma con el dedo)';
+    document.getElementById('firma-cap-req').style.display = 'inline';
+    if (firmaCapacitorDataURL === '__timestamp__') firmaCapacitorDataURL = null;
+  } else if (metodo === 'huella') {
+    canvasWrap.style.display = 'none';
+    wrapHuella.classList.remove('oculto');
+    modoLabel.textContent = '(huella digital)';
+    document.getElementById('firma-cap-req').style.display = 'inline';
+    firmaCapacitorDataURL = null;
+  }
+}
+
+// ── Limpiar firma del capacitador ──
+function limpiarFirmaCapacitador() {
+  Firma.limpiar('canvas-capacitador');
+  firmaCapacitorDataURL = null;
+  document.getElementById('firma-capacitador-area').classList.remove('tiene-firma');
+}
+
+// ── Huella del capacitador ──
+async function registrarHuellaCapacitador() {
+  const estado = document.getElementById('huella-cap-estado');
+  try {
+    estado.textContent = '⏳ Esperando huella...';
+    await Firma.registrarHuella('capacitador');
+    huellaCapacitadorRegistrada = true;
+    firmaCapacitorDataURL = '__huella__';
+    estado.textContent = '✅ Huella registrada correctamente';
+    estado.style.color = '#16a34a';
+    document.getElementById('btn-huella-cap').textContent = '✅ Huella del Capacitador Registrada';
+    document.getElementById('btn-huella-cap').disabled = true;
+  } catch (err) {
+    estado.textContent = '❌ ' + (err.message || 'Error al registrar huella');
+    estado.style.color = '#dc2626';
+  }
+}
+
+// ── Correos: filtrar memoria ──
+function filtrarMemoriaCorreos(valor) {
+  const contenedor = document.getElementById('memoria-correos');
+  if (!memoriaCorreos.length) { contenedor.classList.remove('visible'); return; }
+
+  const filtrados = memoriaCorreos.filter(c =>
+    c.toLowerCase().includes(valor.toLowerCase()) && !correosEnvio.includes(c)
+  );
+  if (!filtrados.length) { contenedor.classList.remove('visible'); return; }
+
+  contenedor.innerHTML = filtrados.map(c =>
+    `<div class="memoria-item" onclick="seleccionarCorreoMemoria('${c}')">${c}</div>`
+  ).join('');
+  contenedor.classList.add('visible');
+}
+
+function seleccionarCorreoMemoria(correo) {
+  document.getElementById('input-correo').value = correo;
+  document.getElementById('memoria-correos').classList.remove('visible');
+  agregarCorreo();
+}
+
+function teclaCorreo(e) {
+  if (e.key === 'Enter') { e.preventDefault(); agregarCorreo(); }
+  if (e.key === 'Escape') document.getElementById('memoria-correos').classList.remove('visible');
+}
+
+// ── Correos: agregar ──
+function agregarCorreo() {
+  const input  = document.getElementById('input-correo');
+  const correo = input.value.trim().toLowerCase();
+  if (!correo) return;
+
+  // Validar formato
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!re.test(correo)) {
+    mostrarToast('Formato de correo inválido', 'error'); return;
+  }
+  if (correosEnvio.includes(correo)) {
+    mostrarToast('Ese correo ya está en la lista', 'aviso'); return;
+  }
+
+  correosEnvio.push(correo);
+  DB.config.agregarCorreo(correo);
+  memoriaCorreos = memoriaCorreos.filter(c => c !== correo);
+  memoriaCorreos.unshift(correo);
+
+  input.value = '';
+  document.getElementById('memoria-correos').classList.remove('visible');
+  actualizarListaCorreos();
+}
+
+function quitarCorreo(correo) {
+  correosEnvio = correosEnvio.filter(c => c !== correo);
+  actualizarListaCorreos();
+}
+
+function actualizarListaCorreos() {
+  const lista    = document.getElementById('correos-lista');
+  const sinMsg   = document.getElementById('sin-correos');
+  const errMsg   = document.getElementById('correo-error');
+
+  if (!correosEnvio.length) {
+    lista.innerHTML = '';
+    sinMsg.style.display = 'block';
+  } else {
+    sinMsg.style.display = 'none';
+    lista.innerHTML = correosEnvio.map(c => `
+      <div class="correo-tag">
+        <span>📧 ${c}</span>
+        <button onclick="quitarCorreo('${c}')" title="Quitar">✕</button>
+      </div>`).join('');
+  }
+  errMsg.style.display = 'none';
+}
+
+// ── Validar y arrancar ──
+function iniciarCharla() {
+  let ok = true;
+
+  // Tema obligatorio
+  const tema = document.getElementById('tema').value.trim();
+  if (!tema) {
+    document.getElementById('tema').classList.add('error');
+    document.getElementById('tema-error').classList.add('visible');
+    ok = false;
+  } else {
+    document.getElementById('tema').classList.remove('error');
+    document.getElementById('tema-error').classList.remove('visible');
+  }
+
+  // Capacitador obligatorio
+  const cap = document.getElementById('capacitador').value.trim();
+  if (!cap) {
+    document.getElementById('capacitador').classList.add('error');
+    document.getElementById('capacitador-error').classList.add('visible');
+    ok = false;
+  } else {
+    document.getElementById('capacitador').classList.remove('error');
+    document.getElementById('capacitador-error').classList.remove('visible');
+  }
+
+  // Firma del capacitador (solo si método no es timestamp)
+  const metodo = document.querySelector('input[name="metodo"]:checked').value;
+  if (metodo !== 'timestamp' && !firmaCapacitorDataURL) {
+    document.getElementById('firma-cap-error').classList.add('visible');
+    ok = false;
+  } else {
+    document.getElementById('firma-cap-error').classList.remove('visible');
+  }
+
+  // Al menos 1 correo
+  if (!correosEnvio.length) {
+    document.getElementById('correo-error').style.display = 'block';
+    ok = false;
+  } else {
+    document.getElementById('correo-error').style.display = 'none';
+  }
+
+  if (!ok) {
+    mostrarToast('Complete todos los campos obligatorios', 'error');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  // Armar tipos de actividad seleccionados
+  const tipos = [];
+  document.querySelectorAll('#tipo-actividad .check-item.marcado').forEach(el => {
+    const val = el.getAttribute('data-valor');
+    if (val === 'Otros') {
+      const txt = document.getElementById('otros-texto').value.trim();
+      tipos.push(txt ? 'Otros: ' + txt : 'Otros');
+    } else {
+      tipos.push(val);
+    }
+  });
+
+  // Guardar configuración de la charla en sessionStorage
+  const charlaConfig = {
+    fecha:        document.getElementById('fecha').value,
+    sede:         document.getElementById('sede').value.trim() || 'PFLGN - PISCO',
+    horas:        document.getElementById('horas').value || '',
+    tiposActividad: tipos,
+    tema:         tema,
+    capacitador:  cap,
+    firmaCapacitador: firmaCapacitorDataURL,
+    correos:      correosEnvio,
+    metodo:       metodo,
+    inicio:       new Date().toISOString()
+  };
+
+  sessionStorage.setItem('charla_config', JSON.stringify(charlaConfig));
+  mostrarToast('Iniciando registro...', 'exito');
+
+  setTimeout(() => {
+    window.location.href = 'registro.html';
+  }, 600);
+}
+
+// ── Toast helper ──
+function mostrarToast(mensaje, tipo = 'info', duracion = 3000) {
+  const iconos = { exito: '✅', error: '❌', aviso: '⚠️', info: 'ℹ️' };
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  el.innerHTML = `<span class="toast-icono">${iconos[tipo]||'ℹ️'}</span><span>${mensaje}</span>`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), duracion);
+}
+</script>
+
+
+<script>
+// Registrar Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => {
+        console.log('SW registrado:', reg.scope);
+        // Detectar actualización disponible
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              mostrarToast('Nueva versión disponible. Recargue para actualizar.', 'info', 8000);
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('SW error:', err));
+  });
+}
+
+// Banner de instalación PWA
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Mostrar banner de instalación
+  const banner = document.createElement('div');
+  banner.id = 'pwa-banner';
+  banner.style.cssText = `
+    position:fixed; bottom:0; left:0; right:0; z-index:999;
+    background:#1a3a5c; color:#fff; padding:14px 20px;
+    display:flex; align-items:center; gap:12px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.25);
+    font-family: 'Segoe UI', Arial, sans-serif;
+  `;
+  banner.innerHTML = `
+    <span style="font-size:1.4rem;">📲</span>
+    <span style="flex:1; font-size:0.9rem; line-height:1.4;">
+      <strong>Instalar como app</strong><br>
+      <small style="opacity:0.85;">Acceso rápido desde la pantalla de inicio</small>
+    </span>
+    <button onclick="instalarPWA()" style="
+      background:#22c55e; color:#fff; border:none; border-radius:8px;
+      padding:9px 18px; font-size:0.88rem; font-weight:700; cursor:pointer;">
+      Instalar
+    </button>
+    <button onclick="document.getElementById('pwa-banner').remove()" style="
+      background:transparent; color:rgba(255,255,255,0.7); border:none;
+      font-size:1.3rem; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+  `;
+  document.body.appendChild(banner);
+});
+
+function instalarPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      mostrarToast('¡App instalada correctamente!', 'exito');
+    }
+    document.getElementById('pwa-banner')?.remove();
+    deferredPrompt = null;
+  });
+}
+</script>
+</body>
+</html>

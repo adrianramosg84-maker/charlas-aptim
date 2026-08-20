@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración — APTIM PERÚ</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a3a5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Charlas APTIM">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">🦺</div>
+  <div class="header-texto">
+    <h1>Configuración del Sistema</h1>
+    <p>APTIM PERÚ S.A.C.</p>
+  </div>
+  <nav class="header-nav">
+    <a href="index.html"     class="btn-nav">📋 Nueva Charla</a>
+    <a href="historial.html" class="btn-nav">📂 Historial</a>
+  </nav>
+</header>
+
+<div class="contenedor">
+
+  <!-- ── EmailJS ── -->
+  <div class="card" style="margin-top:20px;">
+    <div class="card-titulo"><span class="icono">📧</span> Configuración de Correo (EmailJS)</div>
+
+    <div id="estado-emailjs" style="padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:0.88rem;">
+    </div>
+
+    <p style="font-size:0.83rem; color:#6b7280; margin-bottom:16px; line-height:1.6;">
+      Para enviar correos automáticos, necesita una cuenta gratuita en
+      <a href="https://www.emailjs.com" target="_blank" style="color:#2563a8;">emailjs.com</a>.
+      Una vez creada su cuenta, Service y Template, ingrese los datos aquí.
+    </p>
+
+    <div class="form-grupo">
+      <label>Public Key</label>
+      <input type="text" id="ejs-public-key" placeholder="Ej: abc123XYZ...">
+    </div>
+    <div class="form-grupo">
+      <label>Service ID</label>
+      <input type="text" id="ejs-service-id" placeholder="Ej: service_xxxxxxx">
+    </div>
+    <div class="form-grupo">
+      <label>Template ID</label>
+      <input type="text" id="ejs-template-id" placeholder="Ej: template_xxxxxxx">
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primario" onclick="guardarEmailJS()">💾 Guardar Configuración</button>
+      <button class="btn btn-gris"     onclick="probarCorreo()">🧪 Enviar correo de prueba</button>
+    </div>
+
+    <div style="margin-top:20px; background:#f8fafc; border-radius:8px; padding:14px;">
+      <p style="font-size:0.83rem; font-weight:700; color:#1a3a5c; margin-bottom:8px;">📋 Instrucciones paso a paso:</p>
+      <ol style="font-size:0.8rem; color:#374151; line-height:2; padding-left:18px;">
+        <li>Ir a <a href="https://www.emailjs.com" target="_blank" style="color:#2563a8;">emailjs.com</a> y crear cuenta gratuita</li>
+        <li>En <b>Email Services</b> → Add New Service → elegir Gmail u Outlook</li>
+        <li>En <b>Email Templates</b> → Create New Template</li>
+        <li>En el template usar estas variables: <code>{{to_email}}</code>, <code>{{subject}}</code>, <code>{{message}}</code></li>
+        <li>En <b>Account</b> → copiar el <b>Public Key</b></li>
+        <li>Pegar los 3 datos arriba y guardar</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ── Personal ── -->
+  <div class="card">
+    <div class="card-titulo"><span class="icono">👥</span> Gestión de Personal</div>
+    <p style="font-size:0.83rem; color:#6b7280; margin-bottom:14px;">
+      Agregue, edite o desactive trabajadores de la lista maestra.
+    </p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primario" onclick="window.location.href='personal.html'">
+        👥 Administrar Personal
+      </button>
+      <button class="btn btn-gris" onclick="exportarPersonal()">
+        📥 Exportar Lista
+      </button>
+    </div>
+    <p style="font-size:0.78rem; color:#9ca3af; margin-top:10px;" id="total-personal-txt"></p>
+  </div>
+
+  <!-- ── Acerca del sistema ── -->
+  <div class="card">
+    <div class="card-titulo"><span class="icono">ℹ️</span> Acerca del Sistema</div>
+    <div style="font-size:0.83rem; color:#374151; line-height:2;">
+      <b>Sistema:</b> Registro de Asistencia a Charlas de 5 Min<br>
+      <b>Empresa:</b> APTIM PERÚ S.A.C.<br>
+      <b>Formato:</b> APTIMP-QA-FM-000030 Rev.8<br>
+      <b>Versión:</b> 1.0.0<br>
+      <b>Tecnología:</b> PWA — funciona en celular, tablet y PC sin instalación<br>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/database.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/email.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await DB.inicializar();
+
+  // Mostrar config guardada
+  const cfg = Correo.obtenerConfig();
+  if (cfg.publicKey)  document.getElementById('ejs-public-key').value  = cfg.publicKey;
+  if (cfg.serviceId)  document.getElementById('ejs-service-id').value  = cfg.serviceId;
+  if (cfg.templateId) document.getElementById('ejs-template-id').value = cfg.templateId;
+
+  // Estado
+  const estadoEl = document.getElementById('estado-emailjs');
+  if (Correo.estaConfigurado()) {
+    estadoEl.style.background = '#f0fdf4';
+    estadoEl.style.color      = '#15803d';
+    estadoEl.textContent      = '✅ EmailJS configurado correctamente — el envío de correos está activo';
+  } else {
+    estadoEl.style.background = '#fffbeb';
+    estadoEl.style.color      = '#92400e';
+    estadoEl.textContent      = '⚠️ EmailJS no configurado — el PDF se descargará localmente hasta que configure el correo';
+  }
+
+  // Total personal
+  const personal = await DB.personal.todos();
+  document.getElementById('total-personal-txt').textContent =
+    `Lista maestra actual: ${personal.length} trabajador(es)`;
+});
+
+function guardarEmailJS() {
+  const pk = document.getElementById('ejs-public-key').value.trim();
+  const si = document.getElementById('ejs-service-id').value.trim();
+  const ti = document.getElementById('ejs-template-id').value.trim();
+  if (!pk || !si || !ti) {
+    mostrarToast('Complete los 3 campos', 'aviso'); return;
+  }
+  Correo.guardarConfig(pk, si, ti);
+  mostrarToast('Configuración guardada. Recargue la página para aplicar.', 'exito');
+  setTimeout(() => location.reload(), 1500);
+}
+
+async function probarCorreo() {
+  const correo = prompt('Ingrese un correo para la prueba:');
+  if (!correo) return;
+  mostrarToast('Enviando correo de prueba...', 'info');
+  try {
+    const cfg = { tema: 'PRUEBA', fecha: fechaHoy(), sede: 'TEST', capacitador: 'SISTEMA', correos: [correo] };
+    const blob = await GenerarPDF.crear(cfg, []);
+    await Correo.enviar({
+      destinatarios: [correo],
+      asunto: 'Prueba — Sistema de Charlas APTIM',
+      cuerpo: 'Este es un correo de prueba del sistema.',
+      pdfBlob: blob,
+      nombreArchivo: 'prueba.pdf'
+    });
+    mostrarToast('¡Correo de prueba enviado!', 'exito');
+  } catch(e) {
+    mostrarToast(e.message, 'error', 6000);
+  }
+}
+
+async function exportarPersonal() {
+  const lista = await DB.personal.todos();
+  const csv = ['Item,DNI,Apellidos y Nombres,Empresa/Area,Cargo']
+    .concat(lista.map(p => `${p.item},"${p.dni}","${p.nombre}","${p.empresa}","${p.cargo}"`))
+    .join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'personal_aptim.csv';
+  a.click(); URL.revokeObjectURL(url);
+  mostrarToast('Lista exportada como CSV', 'exito');
+}
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(err => console.warn('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>

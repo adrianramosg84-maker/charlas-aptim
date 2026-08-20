@@ -1,0 +1,6 @@
+# No subir carpetas vacías ni temporales
+db/
+pdfs/
+*.log
+.DS_Store
+Thumbs.db
